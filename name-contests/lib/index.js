@@ -22,12 +22,17 @@ MongoClient.connect(
   (err, mPool) => {
     assert.equal(err, null)
 
+    const mdb = require('../database/mdb')(mPool)
+
     express.use('/graphql', (req, res) => {
       const loaders = {
         usersByIds: new DataLoader(pgdb.getUsersByIds),
         usersByApiKey: new DataLoader(pgdb.getUsersByApiKeys),
         namesForContestIds: new DataLoader(pgdb.getNamesForContestIds),
-        contestsForUserIds: new DataLoader(pgdb.getContestsForUserIds)
+        contestsForUserIds: new DataLoader(pgdb.getContestsForUserIds),
+        mdb: {
+          usersByIds: new DataLoader(mdb.getUsersByIds)
+        }
       }
       expressGraphql({
         schema: ncSchema,
