@@ -1,9 +1,11 @@
+const DataLoader = require('dataloader')
 const { nodeEnv } = require('./util')
 
 // postgres
 const pg = require('pg')
 const pgConfig = require('../config/pg')[nodeEnv]
 const pgPool = new pg.Pool(pgConfig)
+const pgdb = require('../database/pgdb')(pgPool)
 
 // mongo
 const { MongoClient } = require('mongodb')
@@ -20,17 +22,23 @@ MongoClient.connect(
   (err, mPool) => {
     assert.equal(err, null)
 
-    express.use(
-      '/graphql',
+    express.use('/graphql', (req, res) => {
+      const loaders = {
+        usersByIds: new DataLoader(pgdb.getUsersByIds),
+        usersByApiKey: new DataLoader(pgdb.getUsersByApiKeys),
+        namesForContestIds: new DataLoader(pgdb.getNamesForContestIds),
+        contestsForUserIds: new DataLoader(pgdb.getContestsForUserIds)
+      }
       expressGraphql({
         schema: ncSchema,
         graphiql: true,
         context: {
           pgPool,
-          mPool
+          mPool,
+          loaders
         }
-      })
-    )
+      })(req, res)
+    })
 
     const PORT = process.env.PORT || 3000
     express.listen(PORT, () => {

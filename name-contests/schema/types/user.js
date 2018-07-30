@@ -6,7 +6,6 @@ const {
   GraphQLList,
   GraphQLInt
 } = require('graphql')
-const pgdb = require('../../database/pgdb')
 const mdb = require('../../database/mdb')
 const ContestType = require('./contest')
 
@@ -23,8 +22,8 @@ module.exports = new GraphQLObjectType({
     email: { type: new GraphQLNonNull(GraphQLString) },
     contests: {
       type: new GraphQLList(ContestType),
-      resolve(obj, args, { pgPool }) {
-        return pgdb(pgPool).getContests(obj)
+      resolve(obj, args, { loaders }) {
+        return loaders.contestsForUserIds.load(obj.id)
       }
     },
     contestsCount: {

@@ -1,71 +1,71 @@
 const humps = require('humps')
+const _ = require('lodash')
 
 module.exports = pgPool => {
+  const orderedFor = (rows, collection, field, singleObject) => {
+    // return rows ordered for the collection
+    const data = humps.camelizeKeys(rows)
+    const inGroupOfField = _.groupBy(data, field)
+    return collection.map(element => {
+      const elementArray = inGroupOfField[element]
+      if (elementArray) {
+        return singleObject ? elementArray[0] : elementArray
+      }
+      return singleObject ? {} : []
+    })
+  }
+
   return {
-    getUser(apiKey) {
+    getUsersByIds(ids) {
       return pgPool
         .query(
           `
                 select * from users
-                where api_key = $1
+                where id = ANY($1)
             `,
-          [apiKey]
+          [ids]
         )
         .then(res => {
-          return humps.camelizeKeys(res.rows[0])
+          return orderedFor(res.rows, ids, 'id', true)
         })
     },
-    getContests(user) {
+    getUsersByApiKeys(keys) {
+      return pgPool
+        .query(
+          `
+                select * from users
+                where api_key = ANY($1)
+            `,
+          [keys]
+        )
+        .then(res => {
+          return orderedFor(res.rows, keys, 'apiKey', true)
+        })
+    },
+    getContestsForUserIds(userIds) {
       return pgPool
         .query(
           `
                 select * from contests
-                where created_by = $1
+                where created_by = ANY($1)
             `,
-          [user.id]
+          [userIds]
         )
         .then(res => {
-          return humps.camelizeKeys(res.rows)
+          return orderedFor(res.rows, userIds, 'createdBy', false)
         })
     },
-    getNames(contest) {
+    getNamesForContestIds(contestIds) {
       return pgPool
         .query(
           `
                 select * from names
-                where contest_id = $1
+                where contest_id = ANY($1)
             `,
-          [contest.id]
+          [contestIds]
         )
         .then(res => {
-          return humps.camelizeKeys(res.rows)
-        })
-    },
-    getUserById(id) {
-      return pgPool
-        .query(
-          `
-                select * from users
-                where id = $1
-            `,
-          [id]
-        )
-        .then(res => {
-          return humps.camelizeKeys(res.rows[0])
-        })
-    },
-    getUserByApiKey(key) {
-      console.log('key=', key)
-      return pgPool
-        .query(
-          `
-                select * from users
-                where api_key = $1
-            `,
-          [key]
-        )
-        .then(res => {
-          return humps.camelizeKeys(res.rows[0])
+          return orderedFor(res.rows, contestIds, 'contestId', false)
         })
     }
   }
