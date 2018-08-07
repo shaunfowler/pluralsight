@@ -4,12 +4,12 @@ const {
   GraphQLString,
   GraphQLNonNull,
   GraphQLList
-} = require('graphql')
-const NameType = require('./name')
-const ContestStatusType = require('./contest-status-type')
+} = require('graphql');
+const NameType = require('./name');
+const ContestStatusType = require('./contest-status-type');
 
 module.exports = new GraphQLObjectType({
-  name: 'ContestType',
+  name: 'Contest',
   fields: {
     id: { type: GraphQLID },
     code: { type: new GraphQLNonNull(GraphQLString) },
@@ -20,8 +20,8 @@ module.exports = new GraphQLObjectType({
     names: {
       type: new GraphQLList(NameType),
       resolve(obj, args, { loaders }) {
-        return loaders.namesForContestIds.load(obj.id)
+        return loaders.namesForContestIds.load(obj.id);
       }
     }
   }
-})
+});

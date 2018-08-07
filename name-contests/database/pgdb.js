@@ -1,4 +1,6 @@
-const { orderedFor } = require("../lib/util");
+const humps = require('humps');
+const { orderedFor } = require('../lib/util');
+const { slug } = require('../lib/util');
 
 module.exports = pgPool => {
   return {
@@ -12,7 +14,7 @@ module.exports = pgPool => {
           [ids]
         )
         .then(res => {
-          return orderedFor(res.rows, ids, "id", true);
+          return orderedFor(res.rows, ids, 'id', true);
         });
     },
     getUsersByApiKeys(keys) {
@@ -25,7 +27,7 @@ module.exports = pgPool => {
           [keys]
         )
         .then(res => {
-          return orderedFor(res.rows, keys, "apiKey", true);
+          return orderedFor(res.rows, keys, 'apiKey', true);
         });
     },
     getContestsForUserIds(userIds) {
@@ -38,7 +40,7 @@ module.exports = pgPool => {
           [userIds]
         )
         .then(res => {
-          return orderedFor(res.rows, userIds, "createdBy", false);
+          return orderedFor(res.rows, userIds, 'createdBy', false);
         });
     },
     getNamesForContestIds(contestIds) {
@@ -51,7 +53,7 @@ module.exports = pgPool => {
           [contestIds]
         )
         .then(res => {
-          return orderedFor(res.rows, contestIds, "contestId", false);
+          return orderedFor(res.rows, contestIds, 'contestId', false);
         });
     },
     getTotalVotesByNameIds(nameIds) {
@@ -63,7 +65,37 @@ module.exports = pgPool => {
           [nameIds]
         )
         .then(res => {
-          return orderedFor(res.rows, nameIds, "nameId", true);
+          return orderedFor(res.rows, nameIds, 'nameId', true);
+        });
+    },
+    addNewContest({ apiKey, title, description }) {
+      return pgPool
+        .query(
+          `insert into contests(code, title, description, created_by)
+           values ($1, $2, $3, 
+             (select id from users where api_key = $4))
+           returning *
+      `,
+          [slug(title), title, description, apiKey]
+        )
+        .then(res => {
+          return humps.camelizeKeys(res.rows[0]);
+        });
+    },
+    getActivitiesForUserIds(userIds) {
+      return pgPool
+        .query(
+          `select created_by, created_at, label, '' as title, 'name' as activity_type
+           from names
+           where created_by = ANY($1)
+           union
+           select created_by, created_at, '' as label, title, 'contest' as activity_type
+           from contests
+           where created_by = ANY($1)`,
+          [userIds]
+        )
+        .then(res => {
+          return orderedFor(res.rows, userIds, 'createdBy', false);
         });
     }
   };

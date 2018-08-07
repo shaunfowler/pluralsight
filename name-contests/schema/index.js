@@ -3,11 +3,11 @@ const {
   GraphQLObjectType,
   GraphQLString,
   GraphQLNonNull
-} = require('graphql')
-const UserType = require('./types/user')
+} = require("graphql");
+const UserType = require("./types/user");
 
 const RootQueryType = new GraphQLObjectType({
-  name: 'RootQueryType',
+  name: "RootQueryType",
   fields: {
     user: {
       type: UserType,
@@ -16,14 +16,25 @@ const RootQueryType = new GraphQLObjectType({
         key: { type: new GraphQLNonNull(GraphQLString) }
       },
       resolve: (obj, { key }, { loaders }) => {
-        return loaders.usersByApiKey.load(key)
+        return loaders.usersByApiKey.load(key);
       }
     }
   }
-})
+});
+
+const AddContestMutation = require("./mutations/add-contest");
+
+const RootMutationType = new GraphQLObjectType({
+  name: "RootMutationType",
+  fields: () => ({
+    AddContest: AddContestMutation
+    // AddName: AddNameMutation
+  })
+});
 
 const ncSchema = new GraphQLSchema({
-  query: RootQueryType
-})
+  query: RootQueryType,
+  mutation: RootMutationType
+});
 
-module.exports = ncSchema
+module.exports = ncSchema;
