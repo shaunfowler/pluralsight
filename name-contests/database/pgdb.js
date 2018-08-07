@@ -1,4 +1,4 @@
-const { orderedFor } = require('../lib/util')
+const { orderedFor } = require("../lib/util");
 
 module.exports = pgPool => {
   return {
@@ -12,8 +12,8 @@ module.exports = pgPool => {
           [ids]
         )
         .then(res => {
-          return orderedFor(res.rows, ids, 'id', true)
-        })
+          return orderedFor(res.rows, ids, "id", true);
+        });
     },
     getUsersByApiKeys(keys) {
       return pgPool
@@ -25,8 +25,8 @@ module.exports = pgPool => {
           [keys]
         )
         .then(res => {
-          return orderedFor(res.rows, keys, 'apiKey', true)
-        })
+          return orderedFor(res.rows, keys, "apiKey", true);
+        });
     },
     getContestsForUserIds(userIds) {
       return pgPool
@@ -38,8 +38,8 @@ module.exports = pgPool => {
           [userIds]
         )
         .then(res => {
-          return orderedFor(res.rows, userIds, 'createdBy', false)
-        })
+          return orderedFor(res.rows, userIds, "createdBy", false);
+        });
     },
     getNamesForContestIds(contestIds) {
       return pgPool
@@ -51,8 +51,20 @@ module.exports = pgPool => {
           [contestIds]
         )
         .then(res => {
-          return orderedFor(res.rows, contestIds, 'contestId', false)
-        })
+          return orderedFor(res.rows, contestIds, "contestId", false);
+        });
+    },
+    getTotalVotesByNameIds(nameIds) {
+      return pgPool
+        .query(
+          `select name_id, up, down from total_votes_by_name
+           where name_id = ANY($1)
+      `,
+          [nameIds]
+        )
+        .then(res => {
+          return orderedFor(res.rows, nameIds, "nameId", true);
+        });
     }
-  }
-}
+  };
+};

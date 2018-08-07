@@ -3,13 +3,14 @@ const {
   GraphQLID,
   GraphQLNonNull,
   GraphQLString
-} = require('graphql')
+} = require("graphql");
 
 module.exports = new GraphQLObjectType({
-  name: 'Name',
+  name: "Name",
 
   fields: () => {
-    const UserType = require('./user')
+    const UserType = require("./user");
+    const TotalVotes = require("./total-votes");
     return {
       id: { type: GraphQLID },
       label: { type: new GraphQLNonNull(GraphQLString) },
@@ -18,9 +19,15 @@ module.exports = new GraphQLObjectType({
       createdBy: {
         type: new GraphQLNonNull(UserType),
         resolve(obj, args, { loaders }) {
-          return loaders.usersByIds.load(obj.createdBy)
+          return loaders.usersByIds.load(obj.createdBy);
+        }
+      },
+      totalVotes: {
+        type: new GraphQLNonNull(TotalVotes),
+        resolve(obj, args, { loaders }) {
+          return loaders.totalVotesByNameIds.load(obj.id);
         }
       }
-    }
+    };
   }
-})
+});
